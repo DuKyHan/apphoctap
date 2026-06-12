@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leisure Time — Vocab Quest 🎮</title>
+<style>
+  :root{
+    --green:#58cc02; --green-dark:#46a302; --green-light:#d7ffb8;
+    --mint:#e8fbf0; --mint-deep:#bdf2d5;
+    --red:#ff4b4b; --red-dark:#ea2b2b; --red-light:#ffdfe0;
+    --blue:#1cb0f6; --blue-dark:#1899d6;
+    --gold:#ffc800; --ink:#3c3c3c; --ink-soft:#777; --line:#e5e5e5;
+    --card:#ffffff; --bg:#f7fbf4;
+    --radius:16px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Baloo 2','Quicksand','Nunito',ui-rounded,'Segoe UI',system-ui,sans-serif;
+    background:var(--bg); color:var(--ink); min-height:100vh;
+    background-image:radial-gradient(circle at 10% 10%, #eaffd9 0, transparent 30%),
+                     radial-gradient(circle at 90% 80%, #d9f6ff 0, transparent 30%);
+  }
+  .app{max-width:640px;margin:0 auto;padding:16px 16px 140px;}
+
+  /* ===== Top bar ===== */
+  .topbar{display:flex;align-items:center;gap:12px;padding:10px 0 18px;position:sticky;top:0;background:linear-gradient(var(--bg) 80%,transparent);z-index:20;}
+  .progress-wrap{flex:1;height:16px;background:#e5e5e5;border-radius:99px;overflow:hidden;}
+  .progress-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--green),#7be03a);border-radius:99px;transition:width .5s cubic-bezier(.22,1,.36,1);position:relative;}
+  .progress-bar::after{content:'';position:absolute;top:3px;left:8px;right:8px;height:4px;border-radius:99px;background:rgba(255,255,255,.45);}
+  .hearts{display:flex;align-items:center;gap:2px;font-weight:800;color:var(--red);font-size:18px;}
+  .hearts .hicon{font-size:20px;transition:transform .2s;}
+  .hearts.pulse .hicon{animation:heartHit .5s;}
+  @keyframes heartHit{0%{transform:scale(1)}30%{transform:scale(1.5) rotate(-12deg)}100%{transform:scale(1)}}
+  .score{display:flex;align-items:center;gap:4px;font-weight:800;color:#b8860b;background:#fff7d6;border:2px solid #ffe48a;border-radius:99px;padding:3px 12px;font-size:15px;}
+
+  /* ===== Cards & question ===== */
+  .stage{animation:slideIn .35s cubic-bezier(.22,1,.36,1);}
+  @keyframes slideIn{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:none}}
+  .qtype{display:inline-block;background:var(--mint);color:var(--green-dark);font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding:4px 12px;border-radius:99px;margin-bottom:10px;border:2px solid var(--mint-deep);}
+  .qtitle{font-size:22px;font-weight:800;margin:0 0 4px;}
+  .qsub{color:var(--ink-soft);font-size:14px;margin:0 0 18px;}
+  .bigword{font-size:34px;font-weight:800;color:var(--ink);background:var(--card);border:2px solid var(--line);border-bottom-width:4px;border-radius:var(--radius);padding:18px 22px;display:flex;align-items:center;gap:14px;margin-bottom:20px;}
+  .pron{font-size:15px;color:var(--ink-soft);font-weight:600;}
+  .speakbtn{margin-left:auto;background:var(--blue);color:#fff;border:none;border-radius:12px;font-size:18px;width:42px;height:42px;cursor:pointer;border-bottom:3px solid var(--blue-dark);transition:transform .1s;}
+  .speakbtn:active{transform:translateY(2px);border-bottom-width:1px;}
+
+  /* options */
+  .opts{display:grid;gap:12px;}
+  .opt{
+    background:var(--card);border:2px solid var(--line);border-bottom-width:4px;border-radius:var(--radius);
+    padding:14px 18px;font-size:17px;font-weight:700;cursor:pointer;text-align:left;color:var(--ink);
+    transition:transform .08s, background .15s, border-color .15s;display:flex;align-items:center;gap:12px;font-family:inherit;
+  }
+  .opt .key{width:28px;height:28px;border-radius:8px;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--ink-soft);flex:none;}
+  .opt:hover{background:#fbfff7;}
+  .opt:active{transform:translateY(2px);border-bottom-width:2px;}
+  .opt.selected{border-color:var(--blue);background:#e7f6ff;color:var(--blue-dark);}
+  .opt.selected .key{border-color:var(--blue);color:var(--blue-dark);}
+  .opt.correct{border-color:var(--green);background:var(--green-light);color:var(--green-dark);}
+  .opt.wrong{border-color:var(--red);background:var(--red-light);color:var(--red-dark);animation:shake .4s;}
+  .opt:disabled{cursor:default;opacity:.95;}
+  @keyframes shake{0%,100%{transform:none}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+  /* matching */
+  .matchgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .mcol{display:grid;gap:12px;align-content:start;}
+  .mbtn{composes:opt;}
+  .mbtn{background:var(--card);border:2px solid var(--line);border-bottom-width:4px;border-radius:var(--radius);padding:14px;font-size:16px;font-weight:700;cursor:pointer;color:var(--ink);transition:all .15s;font-family:inherit;text-align:center;}
+  .mbtn:active{transform:translateY(2px);}
+  .mbtn.selected{border-color:var(--blue);background:#e7f6ff;color:var(--blue-dark);}
+  .mbtn.matched{border-color:var(--mint-deep);background:var(--mint);color:#9bb8a5;pointer-events:none;transform:scale(.97);}
+  .mbtn.flashwrong{border-color:var(--red);background:var(--red-light);animation:shake .4s;}
+
+  /* arrange */
+  .answer-row{min-height:64px;border-bottom:2px solid var(--line);display:flex;flex-wrap:wrap;gap:8px;padding:8px 4px 12px;margin-bottom:22px;align-items:flex-start;}
+  .pool{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;}
+  .chip{
+    background:var(--card);border:2px solid var(--line);border-bottom-width:4px;border-radius:14px;
+    padding:10px 16px;font-size:17px;font-weight:700;cursor:pointer;color:var(--ink);font-family:inherit;
+    transition:transform .1s;animation:pop .2s;
+  }
+  .chip:active{transform:translateY(2px);border-bottom-width:2px;}
+  .chip.in-answer{background:#eef9ff;border-color:#bfe7fb;}
+  .chip.ghost{background:#eee;border-color:#ddd;color:transparent;pointer-events:none;}
+  @keyframes pop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+
+  /* fill letters */
+  .word-line{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:10px 0 6px;}
+  .lbox{width:48px;height:56px;border-radius:12px;border:2px solid var(--line);border-bottom-width:4px;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;background:var(--card);}
+  .lbox.fixed{background:var(--mint);border-color:var(--mint-deep);color:var(--green-dark);}
+  input.lbox{text-align:center;outline:none;color:var(--blue-dark);text-transform:lowercase;font-family:inherit;padding:0;}
+  input.lbox:focus{border-color:var(--blue);background:#f0faff;}
+  .hint-pill{display:inline-flex;align-items:center;gap:8px;background:#fff7d6;border:2px solid #ffe48a;border-radius:99px;padding:6px 16px;font-weight:700;color:#9a7b00;margin-bottom:8px;font-size:15px;}
+  .center{text-align:center;}
+
+  /* bottom bar / banner */
+  .bottombar{
+    position:fixed;left:0;right:0;bottom:0;z-index:50;background:#fff;border-top:2px solid var(--line);
+    transition:background .25s,border-color .25s;
+  }
+  .bottombar .inner{max-width:640px;margin:0 auto;padding:14px 16px;display:flex;align-items:center;gap:14px;}
+  .bottombar.good{background:var(--green-light);border-color:#b4ec8b;}
+  .bottombar.bad{background:var(--red-light);border-color:#ffb3b6;}
+  .fb{flex:1;display:none;animation:pop .25s;}
+  .bottombar.good .fb,.bottombar.bad .fb{display:block;}
+  .fb .fb-title{font-weight:800;font-size:19px;display:flex;gap:8px;align-items:center;}
+  .bottombar.good .fb-title{color:var(--green-dark);}
+  .bottombar.bad .fb-title{color:var(--red-dark);}
+  .fb .fb-detail{font-size:14px;font-weight:600;color:var(--ink-soft);margin-top:2px;}
+  .bottombar.bad .fb-detail{color:#c23a3a;}
+
+  .btn{
+    font-family:inherit;font-weight:800;font-size:16px;letter-spacing:.04em;text-transform:uppercase;
+    border:none;border-radius:14px;padding:14px 34px;cursor:pointer;transition:transform .08s,filter .15s;
+    border-bottom:4px solid rgba(0,0,0,.18);
+  }
+  .btn:active{transform:translateY(3px);border-bottom-width:1px;}
+  .btn-check{background:var(--green);color:#fff;margin-left:auto;}
+  .btn-check:disabled{background:#e5e5e5;color:#aaa;cursor:not-allowed;border-bottom-color:transparent;}
+  .btn-continue{background:var(--green);color:#fff;margin-left:auto;}
+  .bottombar.bad .btn-continue{background:var(--red);}
+  .btn-blue{background:var(--blue);color:#fff;}
+  .btn-ghost{background:#fff;color:var(--blue-dark);border:2px solid var(--line);border-bottom-width:4px;}
+
+  /* mascot */
+  .mascot{font-size:44px;line-height:1;filter:drop-shadow(0 3px 0 rgba(0,0,0,.08));transition:transform .3s;}
+  .mascot.happy{animation:bounce .6s;}
+  .mascot.sad{animation:wobble .6s;}
+  @keyframes bounce{0%,100%{transform:none}30%{transform:translateY(-14px) rotate(8deg)}60%{transform:translateY(0) scale(1.08)}}
+  @keyframes wobble{0%,100%{transform:none}25%{transform:rotate(-14deg)}75%{transform:rotate(14deg)}}
+
+  /* screens */
+  .screen{text-align:center;padding:40px 10px;animation:pop .35s;}
+  .screen .bigemoji{font-size:84px;}
+  .screen h1{font-size:32px;margin:14px 0 8px;}
+  .screen p{color:var(--ink-soft);font-weight:600;font-size:16px;margin:0 0 26px;}
+  .statline{display:flex;gap:14px;justify-content:center;margin-bottom:30px;flex-wrap:wrap;}
+  .statcard{background:var(--card);border:2px solid var(--line);border-bottom-width:4px;border-radius:var(--radius);padding:14px 24px;min-width:120px;}
+  .statcard .v{font-size:26px;font-weight:800;}
+  .statcard .l{font-size:12px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.06em;}
+  .statcard.gold .v{color:#b8860b;}
+  .statcard.green .v{color:var(--green-dark);}
+  .statcard.red .v{color:var(--red-dark);}
+
+  .confetti{position:fixed;top:-12px;z-index:99;border-radius:3px;pointer-events:none;animation:fall linear forwards;}
+  @keyframes fall{to{transform:translateY(110vh) rotate(720deg);}}
+
+  @media (max-width:480px){
+    .bigword{font-size:26px;}
+    .lbox{width:40px;height:48px;font-size:22px;}
+    .matchgrid{gap:8px;}
+    .mbtn{font-size:14px;padding:12px 8px;}
+    .btn{padding:13px 22px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none !important;transition:none !important;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- TOP BAR -->
+  <div class="topbar" id="topbar">
+    <div class="mascot" id="mascot">🐯</div>
+    <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="hearts" id="hearts"></div>
+    <div class="score">⭐ <span id="scoreVal">0</span></div>
+  </div>
+
+  <!-- GAME STAGE -->
+  <div id="stage"></div>
+</div>
+
+<!-- BOTTOM BAR -->
+<div class="bottombar" id="bottombar">
+  <div class="inner">
+    <div class="fb" id="fb">
+      <div class="fb-title" id="fbTitle"></div>
+      <div class="fb-detail" id="fbDetail"></div>
+    </div>
+    <button class="btn btn-check" id="btnCheck" disabled>Check</button>
+    <button class="btn btn-continue" id="btnContinue" style="display:none">Continue</button>
+  </div>
+</div>
+
+<script>
+/* ================== DATA ================== */
+const VOCAB = [
+  {en:'balance', vi:'sự thăng bằng, sự cân bằng', pron:'/ˈbæləns/'},
+  {en:'bracelet', vi:'vòng đeo tay', pron:'/ˈbreɪslət/'},
+  {en:'crazy', vi:'rất thích, quá say mê', pron:'/ˈkreɪzi/'},
+  {en:'cruel', vi:'độc ác', pron:'/ˈkruːəl/'},
+  {en:'detest', vi:'căm ghét', pron:'/dɪˈtest/'},
+  {en:'DIY', vi:'hoạt động tự làm, sửa đồ tại nhà', pron:'/ˌdiː aɪ ˈwaɪ/'},
+  {en:'fancy', vi:'mến, thích', pron:'/ˈfænsi/'},
+  {en:'fold', vi:'gấp, gập', pron:'/fəʊld/'},
+  {en:'fond', vi:'mến, thích', pron:'/fɒnd/'},
+  {en:'keen', vi:'say mê, ham thích', pron:'/kiːn/'},
+  {en:'keep in touch', vi:'giữ liên lạc', pron:'/kiːp ɪn tʌtʃ/'},
+  {en:'kit', vi:'bộ đồ nghề', pron:'/kɪt/'},
+  {en:'leisure', vi:'thời gian rảnh rỗi', pron:'/ˈleʒə/'},
+  {en:'message', vi:'gửi tin nhắn', pron:'/ˈmesɪdʒ/'},
+  {en:'muscle', vi:'cơ bắp', pron:'/ˈmʌsl/'},
+  {en:'origami', vi:'nghệ thuật gấp giấy Nhật Bản', pron:'/ˌɒrɪˈɡɑːmi/'},
+  {en:'outdoors', vi:'ngoài trời', pron:'/ˌaʊtˈdɔːz/'},
+  {en:'prefer', vi:'thích hơn', pron:'/prɪˈfɜː/'},
+  {en:'puzzle', vi:'trò chơi giải đố', pron:'/ˈpʌzl/'},
+  {en:'resort', vi:'khu nghỉ dưỡng', pron:'/rɪˈzɔːt/'},
+  {en:'snowboarding', vi:'trượt tuyết bằng ván', pron:'/ˈsnəʊbɔːdɪŋ/'},
+  {en:'stay in shape', vi:'giữ dáng', pron:'/steɪ ɪn ʃeɪp/'},
+];
+const byEn = Object.fromEntries(VOCAB.map(w=>[w.en,w]));
+
+/* Question bank — 16 questions, 4 types, covers all 22 items */
+const QUESTIONS = [
+  {type:'mcq', word:'leisure'},
+  {type:'fill', word:'fold', pattern:'f__d', vi:'gấp, gập'},
+  {type:'mcq', word:'cruel'},
+  {type:'match', pairs:['bracelet','muscle','origami','outdoors']},
+  {type:'arrange', vi:'Tôi thích trà hơn cà phê.', en:['I','prefer','tea','to','coffee'], extra:['fancy','outdoors']},
+  {type:'mcq', word:'detest'},
+  {type:'fill', word:'keen', pattern:'k__n', vi:'say mê, ham thích'},
+  {type:'arrange', vi:'Cô ấy mến mèo.', en:['She','is','fond','of','cats'], extra:['keen','muscle']},
+  {type:'match', pairs:['puzzle','resort','kit','balance']},
+  {type:'mcq', word:'crazy'},
+  {type:'fill', word:'message', pattern:'m_ss_g_', vi:'gửi tin nhắn'},
+  {type:'arrange', vi:'Chúng tôi giữ liên lạc mỗi ngày.', en:['We','keep','in','touch','every','day'], extra:['shape','fold']},
+  {type:'mcq', word:'snowboarding'},
+  {type:'mcq', word:'DIY'},
+  {type:'fill', word:'fancy', pattern:'f_nc_', vi:'mến, thích'},
+  {type:'mcq', word:'stay in shape'},
+];
+
+/* ================== STATE ================== */
+let qIndex = 0, hearts = 3, score = 0, correctCount = 0;
+let current = null;          // per-question state
+let locked = false;          // question answered & locked
+
+const $ = id => document.getElementById(id);
+const stage = $('stage'), btnCheck = $('btnCheck'), btnContinue = $('btnContinue');
+const bottombar = $('bottombar'), mascot = $('mascot');
+
+/* ================== AUDIO (WebAudio cues) ================== */
+let actx = null;
+function tone(freq, t0, dur, type='sine', vol=0.18){
+  const o = actx.createOscillator(), g = actx.createGain();
+  o.type = type; o.frequency.value = freq;
+  g.gain.setValueAtTime(vol, actx.currentTime + t0);
+  g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + t0 + dur);
+  o.connect(g); g.connect(actx.destination);
+  o.start(actx.currentTime + t0); o.stop(actx.currentTime + t0 + dur + .05);
+}
+function sfx(kind){
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    if(actx.state === 'suspended') actx.resume();
+    if(kind==='good'){ tone(660,0,.12,'triangle'); tone(880,.12,.2,'triangle'); }
+    else if(kind==='bad'){ tone(220,0,.25,'sawtooth',.12); tone(165,.1,.3,'sawtooth',.12); }
+    else if(kind==='win'){ [523,659,784,1047].forEach((f,i)=>tone(f,i*.13,.22,'triangle')); }
+    else if(kind==='tap'){ tone(440,0,.06,'sine',.08); }
+  }catch(e){}
+}
+function speak(text){
+  try{
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'en-GB'; u.rate = .9;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+/* ================== HELPERS ================== */
+const shuffle = a => a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(p=>p[1]);
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+
+function renderHearts(){
+  $('hearts').innerHTML = Array.from({length:3},(_,i)=>
+    `<span class="hicon">${i < hearts ? '❤️' : '🩶'}</span>`).join('');
+}
+function renderProgress(){
+  $('progressBar').style.width = (qIndex / QUESTIONS.length * 100) + '%';
+}
+function addScore(n){
+  score += n; $('scoreVal').textContent = score;
+}
+function loseHeart(){
+  hearts--; renderHearts();
+  const h = $('hearts'); h.classList.remove('pulse'); void h.offsetWidth; h.classList.add('pulse');
+}
+function setMascot(mood){
+  mascot.classList.remove('happy','sad'); void mascot.offsetWidth;
+  if(mood) mascot.classList.add(mood);
+  mascot.textContent = mood==='sad' ? '🙀' : mood==='happy' ? '😸' : '🐯';
+  if(mood) setTimeout(()=>{ mascot.textContent='🐯'; }, 1400);
+}
+
+/* ================== FEEDBACK BANNER ================== */
+function showFeedback(good, detail){
+  locked = true;
+  bottombar.classList.add(good?'good':'bad');
+  $('fbTitle').innerHTML = good
+    ? `<span>✅</span> ${['Correct!','Great job!','Awesome!','Chính xác!'][Math.floor(Math.random()*4)]}`
+    : `<span>❌</span> Incorrect`;
+  $('fbDetail').textContent = detail || '';
+  btnCheck.style.display = 'none';
+  btnContinue.style.display = 'inline-block';
+  btnContinue.focus();
+  if(good){ sfx('good'); setMascot('happy'); addScore(10); correctCount++; }
+  else { sfx('bad'); setMascot('sad'); loseHeart(); }
+}
+function clearFeedback(){
+  bottombar.classList.remove('good','bad');
+  btnContinue.style.display = 'none';
+  btnCheck.style.display = 'inline-block';
+  btnCheck.disabled = true;
+}
+
+/* ================== QUESTION RENDERERS ================== */
+function render(){
+  locked = false;
+  clearFeedback();
+  renderProgress();
+  if(hearts <= 0) return showGameOver();
+  if(qIndex >= QUESTIONS.length) return showWin();
+
+  const q = QUESTIONS[qIndex];
+  current = {q};
+  if(q.type==='mcq') renderMCQ(q);
+  else if(q.type==='match') renderMatch(q);
+  else if(q.type==='arrange') renderArrange(q);
+  else if(q.type==='fill') renderFill(q);
+}
+
+/* ---- Type 1: Multiple Choice ---- */
+function renderMCQ(q){
+  const w = byEn[q.word];
+  const wrong = shuffle(VOCAB.filter(v=>v.en!==q.word && v.vi!==w.vi)).slice(0,3).map(v=>v.vi);
+  const opts = shuffle([w.vi, ...wrong]);
+  current.answer = w.vi; current.selected = null;
+
+  stage.innerHTML = `
+    <div class="stage">
+      <span class="qtype">📝 Multiple choice</span>
+      <h2 class="qtitle">Chọn nghĩa đúng của từ:</h2>
+      <p class="qsub">Tap the correct Vietnamese meaning.</p>
+      <div class="bigword">${esc(w.en)} <span class="pron">${esc(w.pron)}</span>
+        <button class="speakbtn" title="Nghe phát âm" onclick="speak('${w.en.replace(/'/g,"\\'")}')">🔊</button>
+      </div>
+      <div class="opts">
+        ${opts.map((o,i)=>`<button class="opt" data-v="${esc(o)}"><span class="key">${i+1}</span>${esc(o)}</button>`).join('')}
+      </div>
+    </div>`;
+
+  stage.querySelectorAll('.opt').forEach(b=>{
+    b.onclick = ()=>{
+      if(locked) return;
+      sfx('tap');
+      stage.querySelectorAll('.opt').forEach(x=>x.classList.remove('selected'));
+      b.classList.add('selected');
+      current.selected = b.dataset.v;
+      btnCheck.disabled = false;
+    };
+  });
+  current.check = ()=>{
+    const good = current.selected === current.answer;
+    stage.querySelectorAll('.opt').forEach(b=>{
+      b.disabled = true;
+      if(b.dataset.v === current.answer) b.classList.add('correct');
+      else if(b.classList.contains('selected') && !good) b.classList.add('wrong');
+    });
+    showFeedback(good, good ? `${w.en} = ${w.vi}` : `Đáp án đúng: ${w.en} = ${w.vi}`);
+  };
+}
+
+/* ---- Type 2: Matching ---- */
+function renderMatch(q){
+  const pairs = q.pairs.map(en=>byEn[en]);
+  const left = shuffle(pairs.map(p=>p.en));
+  const right = shuffle(pairs.map(p=>p.vi));
+  current.matchedCount = 0; current.selEn = null; current.selVi = null;
+
+  stage.innerHTML = `
+    <div class="stage">
+      <span class="qtype">🔗 Matching</span>
+      <h2 class="qtitle">Nối từ với nghĩa đúng</h2>
+      <p class="qsub">Tap one English word, then tap its Vietnamese meaning. Sai 1 cặp = mất 1 ❤️!</p>
+      <div class="matchgrid">
+        <div class="mcol">${left.map(en=>`<button class="mbtn" data-en="${esc(en)}">${esc(en)}</button>`).join('')}</div>
+        <div class="mcol">${right.map(vi=>`<button class="mbtn" data-vi="${esc(vi)}">${esc(vi)}</button>`).join('')}</div>
+      </div>
+    </div>`;
+  btnCheck.disabled = true; // matching auto-checks
+
+  const tryPair = ()=>{
+    if(!current.selEn || !current.selVi) return;
+    const enBtn = current.selEn, viBtn = current.selVi;
+    const ok = byEn[enBtn.dataset.en].vi === viBtn.dataset.vi;
+    current.selEn = current.selVi = null;
+    if(ok){
+      sfx('good');
+      [enBtn,viBtn].forEach(b=>{ b.classList.remove('selected'); b.classList.add('matched'); });
+      addScore(5);
+      current.matchedCount++;
+      if(current.matchedCount === q.pairs.length){
+        setTimeout(()=>showFeedback(true, 'Bạn đã nối đúng cả 4 cặp! 🔥'), 250);
+      }
+    } else {
+      sfx('bad'); setMascot('sad'); loseHeart();
+      [enBtn,viBtn].forEach(b=>{ b.classList.remove('selected'); b.classList.add('flashwrong'); });
+      setTimeout(()=>[enBtn,viBtn].forEach(b=>b.classList.remove('flashwrong')), 450);
+      if(hearts <= 0) setTimeout(showGameOver, 600);
+    }
+  };
+  stage.querySelectorAll('.mbtn').forEach(b=>{
+    b.onclick = ()=>{
+      if(locked) return;
+      sfx('tap');
+      const side = b.dataset.en ? 'selEn' : 'selVi';
+      const colBtns = b.dataset.en
+        ? stage.querySelectorAll('[data-en]') : stage.querySelectorAll('[data-vi]');
+      colBtns.forEach(x=>x.classList.remove('selected'));
+      b.classList.add('selected');
+      current[side] = b;
+      tryPair();
+    };
+  });
+  current.check = ()=>{}; // not used
+}
+
+/* ---- Type 3: Tap to Arrange ---- */
+function renderArrange(q){
+  const words = shuffle([...q.en, ...q.extra]);
+  current.answer = q.en.join(' ');
+  current.placed = [];
+
+  stage.innerHTML = `
+    <div class="stage">
+      <span class="qtype">🧩 Sentence building</span>
+      <h2 class="qtitle">Dịch câu này sang tiếng Anh:</h2>
+      <p class="qsub">Tap the word bubbles in the correct order. Tap a placed word to remove it.</p>
+      <div class="bigword" style="font-size:22px">🇻🇳 ${esc(q.vi)}</div>
+      <div class="answer-row" id="answerRow"></div>
+      <div class="pool" id="pool">
+        ${words.map((w,i)=>`<button class="chip" data-i="${i}" data-w="${esc(w)}">${esc(w)}</button>`).join('')}
+      </div>
+    </div>`;
+
+  const answerRow = $('answerRow'), pool = $('pool');
+  const sync = ()=>{ btnCheck.disabled = current.placed.length === 0; };
+
+  pool.querySelectorAll('.chip').forEach(c=>{
+    c.onclick = ()=>{
+      if(locked || c.classList.contains('ghost')) return;
+      sfx('tap');
+      c.classList.add('ghost');
+      const a = document.createElement('button');
+      a.className = 'chip in-answer'; a.textContent = c.dataset.w; a.dataset.ref = c.dataset.i;
+      a.onclick = ()=>{
+        if(locked) return;
+        sfx('tap');
+        a.remove();
+        pool.querySelector(`[data-i="${a.dataset.ref}"]`).classList.remove('ghost');
+        current.placed = current.placed.filter(x=>x!==a);
+        sync();
+      };
+      answerRow.appendChild(a);
+      current.placed.push(a);
+      sync();
+    };
+  });
+  current.check = ()=>{
+    const attempt = current.placed.map(a=>a.textContent).join(' ');
+    const good = attempt === current.answer;
+    showFeedback(good, good ? `"${current.answer}." 🎯` : `Đáp án đúng: "${current.answer}."`);
+  };
+}
+
+/* ---- Type 4: Fill in the blank ---- */
+function renderFill(q){
+  const letters = q.word.split('');
+  const blanks = q.pattern.split('').map((c,i)=>c==='_' ? i : null).filter(i=>i!==null);
+  current.answer = q.word;
+
+  stage.innerHTML = `
+    <div class="stage center">
+      <span class="qtype">⌨️ Fill the letters</span>
+      <h2 class="qtitle">Điền các chữ cái còn thiếu</h2>
+      <p class="qsub">Type the missing letters to complete the English word.</p>
+      <div class="hint-pill">💡 Nghĩa: <b>${esc(q.vi)}</b></div>
+      <div class="word-line" id="wordLine">
+        ${letters.map((ch,i)=> blanks.includes(i)
+          ? `<input class="lbox" maxlength="1" data-i="${i}" autocomplete="off" autocapitalize="off">`
+          : `<div class="lbox fixed">${ch}</div>`).join('')}
+      </div>
+      <p class="qsub" style="margin-top:10px">${letters.length} letters · ${blanks.length} missing</p>
+    </div>`;
+
+  const inputs = [...stage.querySelectorAll('input.lbox')];
+  inputs[0].focus();
+  inputs.forEach((inp,idx)=>{
+    inp.addEventListener('input', ()=>{
+      inp.value = inp.value.replace(/[^a-zA-Z]/g,'').toLowerCase();
+      if(inp.value && idx < inputs.length-1) inputs[idx+1].focus();
+      btnCheck.disabled = !inputs.every(i=>i.value);
+    });
+    inp.addEventListener('keydown', e=>{
+      if(e.key==='Backspace' && !inp.value && idx>0) inputs[idx-1].focus();
+      if(e.key==='Enter' && !btnCheck.disabled && !locked) doCheck();
+    });
+  });
+  current.check = ()=>{
+    const attempt = letters.map((ch,i)=>{
+      const inp = inputs.find(x=>+x.dataset.i===i);
+      return inp ? inp.value : ch;
+    }).join('');
+    const good = attempt.toLowerCase() === q.word.toLowerCase();
+    inputs.forEach(i=>{ i.disabled = true;
+      i.style.borderColor = good ? 'var(--green)' : 'var(--red)';
+      i.style.background = good ? 'var(--green-light)' : 'var(--red-light)';
+    });
+    showFeedback(good, good ? `${q.word} = ${q.vi}` : `Đáp án đúng: ${q.word} (${q.vi})`);
+    if(!good){
+      // reveal correct word
+      $('wordLine').insertAdjacentHTML('afterend',
+        `<div class="hint-pill" style="background:var(--green-light);border-color:#b4ec8b;color:var(--green-dark)">✔ ${esc(q.word)}</div>`);
+    }
+  };
+}
+
+/* ================== END SCREENS ================== */
+function showGameOver(){
+  locked = true;
+  bottombar.style.display = 'none';
+  stage.innerHTML = `
+    <div class="screen">
+      <div class="bigemoji">💔</div>
+      <h1>Game Over!</h1>
+      <p>Hết tim rồi... nhưng đừng bỏ cuộc nhé! Mỗi lần chơi lại là một lần nhớ từ lâu hơn. 💪</p>
+      <div class="statline">
+        <div class="statcard gold"><div class="v">${score}</div><div class="l">Score</div></div>
+        <div class="statcard green"><div class="v">${correctCount}/${QUESTIONS.length}</div><div class="l">Correct</div></div>
+      </div>
+      <button class="btn btn-blue" onclick="restart()">🔄 Try Again</button>
+    </div>`;
+}
+function showWin(){
+  locked = true;
+  bottombar.style.display = 'none';
+  $('progressBar').style.width = '100%';
+  sfx('win');
+  confetti();
+  const perfect = hearts === 3;
+  stage.innerHTML = `
+    <div class="screen">
+      <div class="bigemoji">${perfect ? '🏆' : '🎉'}</div>
+      <h1>${perfect ? 'PERFECT! Xuất sắc!' : 'Congratulations!'}</h1>
+      <p>${perfect
+          ? 'Hoàn thành không mất một tim nào — bạn là master của Unit 1! 👑'
+          : 'Bạn đã hoàn thành tất cả từ vựng Unit 1: Leisure Time. Học đều mỗi ngày nhé! 🌱'}</p>
+      <div class="statline">
+        <div class="statcard gold"><div class="v">⭐ ${score}</div><div class="l">Total score</div></div>
+        <div class="statcard green"><div class="v">${correctCount}/${QUESTIONS.length}</div><div class="l">Correct</div></div>
+        <div class="statcard red"><div class="v">${'❤️'.repeat(hearts) || '0'}</div><div class="l">Hearts left</div></div>
+      </div>
+      <button class="btn btn-blue" onclick="restart()">🔄 Play Again</button>
+    </div>`;
+}
+function confetti(){
+  const colors = ['#58cc02','#1cb0f6','#ffc800','#ff4b4b','#ce82ff'];
+  for(let i=0;i<70;i++){
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    const s = 6+Math.random()*8;
+    c.style.cssText = `left:${Math.random()*100}vw;width:${s}px;height:${s*1.4}px;
+      background:${colors[i%colors.length]};animation-duration:${2+Math.random()*2.5}s;
+      animation-delay:${Math.random()*0.8}s;`;
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(), 5500);
+  }
+}
+function restart(){
+  qIndex = 0; hearts = 3; score = 0; correctCount = 0;
+  $('scoreVal').textContent = 0;
+  bottombar.style.display = '';
+  renderHearts(); render();
+}
+
+/* ================== BUTTONS ================== */
+function doCheck(){ if(current && current.check && !locked) current.check(); }
+btnCheck.onclick = doCheck;
+btnContinue.onclick = ()=>{
+  if(hearts <= 0) return showGameOver();
+  qIndex++; render();
+};
+document.addEventListener('keydown', e=>{
+  if(e.key === 'Enter'){
+    if(btnContinue.style.display !== 'none') btnContinue.click();
+  }
+  // number keys for MCQ
+  if(!locked && current && current.q && current.q.type==='mcq' && /^[1-4]$/.test(e.key)){
+    const b = stage.querySelectorAll('.opt')[+e.key-1];
+    if(b) b.click();
+  }
+});
+
+/* ================== INIT ================== */
+renderHearts();
+render();
+</script>
+</body>
+</html>
